@@ -17,7 +17,7 @@ export class Artist {
   @Column()
   public name: string;
 
-  @ManyToMany(() => Genre, { cascade: true })
+  @ManyToMany(() => Genre, { cascade: true, eager: true })
   @JoinTable()
   public genres: Genre[];
 }

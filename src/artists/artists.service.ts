@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
@@ -17,16 +17,11 @@ export class ArtistsService {
   ) {}
 
   async getAllArtists() {
-    return await this.artistsRepository.find({
-      relations: ['genres'], // Include genres in the result
-    });
+    return await this.artistsRepository.find();
   }
 
   async getArtistById(id: number) {
-    const artist = await this.artistsRepository.findOne({
-      where: { id },
-      relations: ['genres'],
-    });
+    const artist = await this.artistsRepository.findOne({ where: { id } });
     if (artist) {
       return artist;
     }
@@ -64,9 +59,7 @@ export class ArtistsService {
         name: artistDto.name,
         genres: genres,
       });
-
-      const savedArtist = await this.artistsRepository.save(artist);
-      return savedArtist;
+      return await this.artistsRepository.save(artist);
     } catch (error) {
       if (error.code === '23505') {
         throw new BadRequestException(
@@ -81,7 +74,7 @@ export class ArtistsService {
     const { genres: genreIds, ...rest } = artistDto;
 
     // Find genres by their IDs
-    const genres = await this.genresRepository.findByIds([genreIds]);
+    const genres = await this.genresRepository.findBy({ id: In([genreIds]) });
 
     // Update artist with associated genres
     await this.artistsRepository.update(id, {

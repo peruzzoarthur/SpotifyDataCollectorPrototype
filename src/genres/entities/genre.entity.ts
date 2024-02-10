@@ -1,7 +1,7 @@
 // genre.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
-import { Artist } from '../../artists/entities/artist.entity';
 import { IsString } from 'class-validator';
+import { Artist } from '../../artists/entities/artist.entity';
 
 @Entity()
 export class Genre {
