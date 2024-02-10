@@ -1,7 +1,7 @@
 // artist-genre.entity.ts
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Artist } from '../artists/artist.entity';
-import { Genre } from '../genres/genre.entity';
+import { Artist } from '../artists/entities/artist.entity';
+import { Genre } from '../genres/entities/genre.entity';
 
 @Entity()
 export class ArtistGenre {

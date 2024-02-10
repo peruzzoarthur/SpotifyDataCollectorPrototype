@@ -1,12 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { ArtistNotFoundException } from './exceptions/artistNotFound.exception';
-import { Artist } from './artist.entity';
-import { Genre } from '../genres/genre.entity'; // Import Genre entity
-// import { CreateGenreDto } from 'src/genres/dto/create-genre.dto';
+import { Artist } from './entities/artist.entity';
+import { Genre } from '../genres/entities/genre.entity'; // Import Genre entity
 
 @Injectable()
 export class ArtistsService {
@@ -26,7 +25,7 @@ export class ArtistsService {
   async getArtistById(id: number) {
     const artist = await this.artistsRepository.findOne({
       where: { id },
-      relations: ['genres'], // Include genres in the result
+      relations: ['genres'],
     });
     if (artist) {
       return artist;
@@ -34,44 +33,49 @@ export class ArtistsService {
     throw new ArtistNotFoundException(id);
   }
 
-  async createArtistWithGenres(
-    artistDto: CreateArtistDto,
-    genreNames: string[],
-  ) {
-    // Find genres by their names
-    const genres = await Promise.all(
-      genreNames.map((name) =>
-        this.genresRepository.findOne({ where: { name } }),
-      ),
-    );
+  async createArtistWithGenres(artistDto: CreateArtistDto) {
+    // Find if genres exist or not in the db.
+    try {
+      const genresInRequest = artistDto.genres.map((n) => n);
+      const genresInDb = await Promise.all(
+        genresInRequest.map((name) =>
+          this.genresRepository.findOne({ where: { name } }),
+        ),
+      );
+      // Here each item in the array will be either null (doesn't exist)
+      // or the Genre entity (if found in db).
 
-    // Create a new artist
-    const newArtist = this.artistsRepository.create({
-      ...artistDto,
-      genres: genres, // Assign genres to the artist
-    });
+      // Create genres that do not exist in the database
+      const genres = await Promise.all(
+        genresInDb.map(async (genre, index) => {
+          if (!genre) {
+            // Genre does not exist in the database, create a new one
+            const newGenre = this.genresRepository.create({
+              name: artistDto.genres[index],
+            });
+            return await this.genresRepository.save(newGenre);
+          }
+          return genre;
+        }),
+      );
 
-    // Save the artist with associated genres
-    await this.artistsRepository.save(newArtist);
+      // Create artist with genre relation...
+      const artist = this.artistsRepository.create({
+        name: artistDto.name,
+        genres: genres,
+      });
 
-    return newArtist;
+      const savedArtist = await this.artistsRepository.save(artist);
+      return savedArtist;
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new BadRequestException(
+          'Artist with the same name already exists',
+        );
+      }
+      throw error; // Error for other case
+    }
   }
-
-  // async createArtist(artistDto: CreateArtistDto, genre: CreateGenreDto) {
-  //   const { genres: genreIds, ...rest } = artistDto;
-
-  //   // Find genres by their IDs
-  //   const genres = await this.genresRepository.findByIds([genreIds]);
-
-  //   // Create a new artist with associated genres
-  //   const newArtist = this.artistsRepository.create({
-  //     ...rest,
-  //     genres,
-  //   });
-
-  //   await this.artistsRepository.save(newArtist);
-  //   return newArtist;
-  // }
 
   async updateArtist(id: number, artistDto: UpdateArtistDto) {
     const { genres: genreIds, ...rest } = artistDto;
@@ -103,3 +107,49 @@ export class ArtistsService {
     }
   }
 }
+
+//backup
+
+// async createArtistWithGenres(
+//   artistDto: CreateArtistDto,
+//   genreNames: string[],
+// ) {
+//   console.log(artistDto.genres);
+//   console.log('this');
+//   console.log(genreNames);
+//   // Find if genres exist or not in the db.
+//   const genresInDb = await Promise.all(
+//     genreNames.map((name) =>
+//       this.genresRepository.findOne({ where: { name } }),
+//     ),
+//   );
+//   console.log('genresINDb');
+//   console.log(genresInDb);
+
+//   // Create genres that do not exist in the database
+//   const genres = await Promise.all(
+//     genresInDb.map(async (genre, index) => {
+//       if (!genre) {
+//         // Genre does not exist in the database, create a new one
+//         const newGenre = this.genresRepository.create({
+//           name: genreNames[index],
+//         });
+//         return await this.genresRepository.save(newGenre);
+//       }
+//       return genre;
+//     }),
+//   );
+
+//   console.log('newGenres');
+//   console.log(genres);
+
+//   const artist = this.artistsRepository.create({
+//     name: artistDto.name,
+//     genres: genres,
+//   });
+
+//   const savedArtist = await this.artistsRepository.save(artist);
+//   console.log('SaavedArtist');
+//   console.log(savedArtist);
+//   return artist;
+// }

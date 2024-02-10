@@ -1,6 +1,7 @@
 // genre.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
-import { Artist } from '../artists/artist.entity';
+import { Artist } from '../../artists/entities/artist.entity';
+import { IsString } from 'class-validator';
 
 @Entity()
 export class Genre {
@@ -8,6 +9,7 @@ export class Genre {
   id: number;
 
   @Column()
+  @IsString()
   name: string;
 
   @ManyToMany(() => Artist, (artist) => artist.genres)

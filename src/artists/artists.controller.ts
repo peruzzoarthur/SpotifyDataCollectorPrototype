@@ -26,11 +26,8 @@ export class ArtistsController {
   }
 
   @Post()
-  async createArtist(
-    @Body() request: { artist: CreateArtistDto; genres: string[] },
-  ) {
-    const { artist, genres } = request;
-    return this.artistsService.createArtistWithGenres(artist, genres);
+  async createArtist(@Body() artistDto: CreateArtistDto) {
+    return this.artistsService.createArtistWithGenres(artistDto);
   }
 
   @Patch(':id')
