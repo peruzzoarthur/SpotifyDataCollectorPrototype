@@ -11,13 +11,16 @@ import {
 @Entity()
 @Unique(['name'])
 export class Artist {
-  @PrimaryGeneratedColumn()
-  public id?: number;
+  @PrimaryGeneratedColumn('uuid')
+  public id?: string;
 
   @Column()
   public name: string;
 
-  @ManyToMany(() => Genre, { cascade: true, eager: true })
+  @ManyToMany(() => Genre, {
+    // cascade: true,
+    eager: true,
+  })
   @JoinTable()
   public genres: Genre[];
 }

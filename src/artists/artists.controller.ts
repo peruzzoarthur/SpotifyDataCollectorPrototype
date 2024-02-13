@@ -10,7 +10,7 @@ import {
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { ArtistsService } from './artists.service';
-import idIsNumberString from 'src/utils/idIsNumberString';
+import idIsString from 'src/utils/idIsNumberString';
 
 @Controller('artists')
 export class ArtistsController {
@@ -21,8 +21,8 @@ export class ArtistsController {
   }
 
   @Get(':id')
-  getArtistById(@Param() { id }: idIsNumberString) {
-    return this.artistsService.getArtistById(Number(id));
+  getArtistById(@Param() { id }: idIsString) {
+    return this.artistsService.getArtistById(id);
   }
 
   @Post()
@@ -32,14 +32,14 @@ export class ArtistsController {
 
   @Patch(':id')
   async updateArtist(
-    @Param() { id }: idIsNumberString,
+    @Param() { id }: idIsString,
     @Body() artist: UpdateArtistDto,
   ) {
-    return this.artistsService.updateArtist(Number(id), artist);
+    return this.artistsService.updateArtist(id, artist);
   }
 
   @Delete(':id')
-  async deleteArtist(@Param() { id }: idIsNumberString) {
-    return this.artistsService.deleteArtist(Number(id));
+  async deleteArtist(@Param() { id }: idIsString) {
+    return this.artistsService.deleteArtist(id);
   }
 }

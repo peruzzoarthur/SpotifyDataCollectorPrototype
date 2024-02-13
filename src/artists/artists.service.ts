@@ -20,7 +20,7 @@ export class ArtistsService {
     return await this.artistsRepository.find();
   }
 
-  async getArtistById(id: number) {
+  async getArtistById(id: string) {
     const artist = await this.artistsRepository.findOne({ where: { id } });
     if (artist) {
       return artist;
@@ -54,6 +54,8 @@ export class ArtistsService {
         }),
       );
 
+      console.log(genres);
+
       // Create artist with genre relation...
       const artist = this.artistsRepository.create({
         name: artistDto.name,
@@ -70,30 +72,48 @@ export class ArtistsService {
     }
   }
 
-  async updateArtist(id: number, artistDto: UpdateArtistDto) {
-    const { genres: genreIds, ...rest } = artistDto;
+  async updateArtist(id: string, artistDto: UpdateArtistDto) {
+    const { genres: genreNames, name: artistName } = artistDto;
 
-    // Find genres by their IDs
-    const genres = await this.genresRepository.findBy({ id: In([genreIds]) });
+    console.log('Genre names:');
+    console.log(genreNames);
 
-    // Update artist with associated genres
-    await this.artistsRepository.update(id, {
-      ...rest,
-      genres,
+    console.log('artist name');
+    console.log(artistName);
+
+    // Find genres by their names
+    const genres = await this.genresRepository.find({
+      where: { name: In(genreNames) },
     });
+    console.log('genres testing');
+    console.log(genres);
 
-    const updatedArtist = await this.artistsRepository.findOne({
-      where: { id },
-      relations: ['genres'], // Include genres in the result
+    console.log('genres before');
+    console.log(genres);
+    genres.push({
+      id: 'adf5735d-a471-46b7-96a2-23b1f9893a2b',
+      name: 'Genreste',
     });
+    console.log('genres after');
+    console.log(genres);
 
-    if (updatedArtist) {
-      return updatedArtist;
-    }
-    throw new ArtistNotFoundException(id);
+    const newTestArtist = this.artistsRepository.create({
+      name: 'Lucidss',
+      genres: [
+        {
+          id: '84dad765-20c8-43b9-9302-308f5770f14e',
+          name: 'Liricalism',
+        },
+        {
+          id: '24084cc2-e11b-4710-85f8-c421de2ecd44',
+          name: 'The New Lirical',
+        },
+      ],
+    });
+    return await this.artistsRepository.save(newTestArtist);
   }
 
-  async deleteArtist(id: number) {
+  async deleteArtist(id: string) {
     const deleteResponse = await this.artistsRepository.delete(id);
     if (!deleteResponse.affected) {
       throw new ArtistNotFoundException(id);

@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 
 export class ArtistNotFoundException extends NotFoundException {
-  constructor(artistId: number) {
+  constructor(artistId: string) {
     super(`Artist with ID ${artistId} not found`);
   }
 }

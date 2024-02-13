@@ -1,17 +1,13 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateArtistDto {
-  @IsNumber()
-  @IsOptional()
-  id: number;
-
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   name: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsArray()
+  @IsString({ each: true, message: 'Each element in genres must be a string' })
   @IsOptional()
-  genres: string;
+  genres: string[];
 }
