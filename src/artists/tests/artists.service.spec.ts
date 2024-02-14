@@ -16,7 +16,7 @@ import {
 } from '../../utils/mocks/artists.mock';
 import { BadRequestException } from '@nestjs/common';
 
-describe('ArtistsService', () => {
+describe('setting up for testing artists service', () => {
   let service: ArtistsService;
   let artistRepository: Repository<Artist>;
   let genreRepository: Repository<Genre>;

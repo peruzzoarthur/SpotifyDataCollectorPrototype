@@ -33,7 +33,7 @@ export const artistSavedEntityMock: Artist = {
 };
 
 export const artistDtoMock: CreateArtistDto = {
-  name: 'The Ogre Magis',
+  name: 'The Ogre Magixx',
   genres: ['Ogre Music'],
 };
 
