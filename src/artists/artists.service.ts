@@ -29,38 +29,38 @@ export class ArtistsService {
   }
 
   async createArtistWithGenres(artistDto: CreateArtistDto) {
-    // Find if genres exist or not in the db.
     try {
-      const genresInRequest = artistDto.genres.map((n) => n);
-      const genresInDb = await Promise.all(
-        genresInRequest.map((name) =>
-          this.genresRepository.findOne({ where: { name } }),
-        ),
-      );
-      // Here each item in the array will be either null (doesn't exist)
-      // or the Genre entity (if found in db).
+      let genres: Genre[] = [];
 
-      // Create genres that do not exist in the database
-      const genres = await Promise.all(
-        genresInDb.map(async (genre, index) => {
-          if (!genre) {
-            // Genre does not exist in the database, create a new one
-            const newGenre = this.genresRepository.create({
-              name: artistDto.genres[index],
-            });
-            return await this.genresRepository.save(newGenre);
-          }
-          return genre;
-        }),
-      );
+      if (artistDto.genres.length > 0) {
+        const genresInRequest = artistDto.genres.map((n) => n);
+        const genresInDb = await Promise.all(
+          genresInRequest.map((name) =>
+            this.genresRepository.findOne({ where: { name } }),
+          ),
+        );
 
-      console.log(genres);
+        // Create genres that do not exist in the database
+        genres = await Promise.all(
+          genresInDb.map(async (genre, index) => {
+            if (!genre) {
+              // Genre does not exist in the database, create a new one
+              const newGenre = this.genresRepository.create({
+                name: artistDto.genres[index],
+              });
+              return await this.genresRepository.save(newGenre);
+            }
+            return genre;
+          }),
+        );
+      }
 
       // Create artist with genre relation...
       const artist = this.artistsRepository.create({
         name: artistDto.name,
         genres: genres,
       });
+
       return await this.artistsRepository.save(artist);
     } catch (error) {
       if (error.code === '23505') {

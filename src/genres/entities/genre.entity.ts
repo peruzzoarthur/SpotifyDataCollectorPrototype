@@ -13,12 +13,12 @@ import { Artist } from '../../artists/entities/artist.entity';
 @Unique(['name'])
 export class Genre {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id?: string;
 
   @Column()
   @IsString()
   name: string;
 
   @ManyToMany(() => Artist, (artist) => artist.genres)
-  artists: Artist[];
+  artists?: Artist[];
 }
