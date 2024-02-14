@@ -1,8 +1,8 @@
-import { IsString } from 'class-validator';
+import { IsUUID } from 'class-validator';
 
-class idIsString {
-  @IsString()
+class idIsUUID {
+  @IsUUID()
   id: string;
 }
 
-export default idIsString;
+export default idIsUUID;
