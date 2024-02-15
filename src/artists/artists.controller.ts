@@ -27,6 +27,18 @@ export class ArtistsController {
 
   @Post()
   async createArtist(@Body() artistDto: CreateArtistDto) {
+    const cleanedName: string = artistDto.name
+      .split(/\s+/)
+      .filter((string) => string !== '')
+      .join(' ');
+    artistDto.name = cleanedName;
+    const cleanedGenres: string[] = artistDto.genres.map((s) =>
+      s
+        .split(/\s+/)
+        .filter((string) => string !== '')
+        .join(' '),
+    );
+    artistDto.genres = cleanedGenres;
     return this.artistsService.createArtistWithGenres(artistDto);
   }
 
