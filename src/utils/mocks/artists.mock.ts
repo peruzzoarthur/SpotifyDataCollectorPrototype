@@ -4,7 +4,6 @@ import { Genre } from 'src/genres/entities/genre.entity';
 
 export const genreCreatedEntityMock: Genre = {
   name: 'Ogre Music',
-  id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
 };
 export const genreSavedEntityMock: Genre = {
   name: 'Ogre Music',

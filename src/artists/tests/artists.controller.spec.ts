@@ -1,43 +1,33 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Artist } from '../entities/artist.entity';
-import {
-  artistSavedEntityMock,
-  genreSavedEntityMock,
-} from '../../utils/mocks/artists.mock';
+import { artistSavedEntityMock } from '../../utils/mocks/artists.mock';
 import { ArtistsController } from '../artists.controller';
 import { ArtistsService } from '../artists.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Genre } from '../../genres/entities/genre.entity';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
+import {
+  artistRepositoryMock,
+  genreRepositoryMock,
+} from '../../utils/mocks/repositories.mock';
 
 describe('setting up config for testing artists controller', () => {
   let app: INestApplication;
   const artistData: Artist = artistSavedEntityMock;
 
   beforeEach(async () => {
-    const artistRepository = {
-      create: jest.fn().mockResolvedValue(artistSavedEntityMock),
-      save: jest.fn().mockReturnValue(artistSavedEntityMock),
-    };
-
-    const genreRepository = {
-      create: jest.fn().mockResolvedValue(genreSavedEntityMock),
-      save: jest.fn().mockReturnValue(genreSavedEntityMock),
-      findOne: jest.fn().mockReturnValue(null),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ArtistsController],
       providers: [
         ArtistsService,
         {
           provide: getRepositoryToken(Artist),
-          useValue: artistRepository,
+          useValue: artistRepositoryMock,
         },
         {
           provide: getRepositoryToken(Genre),
-          useValue: genreRepository,
+          useValue: genreRepositoryMock,
         },
       ],
     }).compile();
@@ -56,7 +46,7 @@ describe('setting up config for testing artists controller', () => {
           .post('/artists')
           .send({
             name: 'The Ogre Magixx',
-            genres: ['Ogre Music', 'Midas Multicast Deephouse'],
+            genres: ['Ogre Music'],
           })
           .expect(201)
           .expect(expectedData);
@@ -119,119 +109,3 @@ describe('setting up config for testing artists controller', () => {
     });
   });
 });
-
-// import { Repository } from 'typeorm';
-// import { ArtistsController } from '../artists.controller';
-// import { ArtistsService } from '../artists.service';
-// import { CreateArtistDto } from '../dto/create-artist.dto';
-// import { Artist } from '../entities/artist.entity';
-// import { getRepositoryToken } from '@nestjs/typeorm';
-// import { Test, TestingModule } from '@nestjs/testing';
-// import { Genre } from '../../genres/entities/genre.entity';
-// import {
-//   artistCreatedEntityMock,
-//   artistCreatedWithoutGenresMock,
-//   artistDtoMock,
-//   artistSavedEntityMock,
-//   artistSavedWithoutGenresMock,
-//   genreCreatedEntityMock,
-//   genreSavedEntityMock,
-// } from '../../utils/mocks/artists.mock';
-
-// describe('setting up for testing artists controller', () => {
-//   let artistsService: ArtistsService;
-//   let artistRepository: Repository<Artist>;
-//   let genreRepository: Repository<Genre>;
-
-//   beforeEach(async () => {
-//     const module: TestingModule = await Test.createTestingModule({
-//       providers: [
-//         ArtistsService,
-//         {
-//           provide: getRepositoryToken(Artist),
-//           useClass: Repository,
-//         },
-//         {
-//           provide: getRepositoryToken(Genre),
-//           useClass: Repository,
-//         },
-//       ],
-//       controllers: [ArtistsController],
-//     }).compile();
-
-//     artistsService = module.get<ArtistsService>(ArtistsService);
-//     artistRepository = module.get<Repository<Artist>>(
-//       getRepositoryToken(Artist),
-//     );
-//     genreRepository = module.get<Repository<Genre>>(getRepositoryToken(Genre));
-//   });
-//   describe('Creating Artist', () => {
-//     it('should create a new artist with valid input data', async () => {
-//       jest
-//         .spyOn(genreRepository, 'findOne')
-//         .mockResolvedValueOnce(genreSavedEntityMock)
-//         .mockResolvedValueOnce(null);
-//       jest
-//         .spyOn(genreRepository, 'create')
-//         .mockReturnValue(genreCreatedEntityMock);
-//       jest
-//         .spyOn(genreRepository, 'save')
-//         .mockResolvedValue(genreSavedEntityMock);
-//       jest;
-//       jest
-//         .spyOn(artistRepository, 'create')
-//         .mockReturnValue(artistCreatedEntityMock);
-//       jest
-//         .spyOn(artistRepository, 'save')
-//         .mockResolvedValue(artistSavedEntityMock);
-//       const controller = new ArtistsController(artistsService);
-//       const artistDto: CreateArtistDto = artistDtoMock;
-//       const result = await controller.createArtist(artistDto);
-//       expect(result).toBeDefined();
-//       expect(result.name).toEqual(artistDto.name);
-//       expect(result.genres).toEqual(artistCreatedEntityMock.genres);
-//     });
-//   });
-
-//   // Should create a new artist with minimum input data
-//   it('should create a new artist with minimum input data', async () => {
-//     const controller = new ArtistsController(artistsService);
-//     const artistWithoutGenreDtoMock: CreateArtistDto = {
-//       name: 'The Sound of Nothing',
-//       genres: [],
-//     };
-//     jest
-//       .spyOn(artistRepository, 'create')
-//       .mockReturnValue(artistCreatedWithoutGenresMock);
-//     jest
-//       .spyOn(artistRepository, 'save')
-//       .mockResolvedValue(artistSavedWithoutGenresMock);
-//     const result = await controller.createArtist(artistWithoutGenreDtoMock);
-//     expect(result).toBeDefined();
-//     expect(result.name).toEqual(artistWithoutGenreDtoMock.name);
-//     expect(result.genres).toEqual(artistWithoutGenreDtoMock.genres);
-//   });
-
-//   // Should throw an error if name is missing
-//   it('should throw an error if name is missing', () => {
-//     const controller = new ArtistsController(artistsService);
-//     const artistDto: CreateArtistDto = {
-//       name: '',
-//       genres: [],
-//     };
-
-//     jest
-//       .spyOn(artistRepository, 'create')
-//       .mockReturnValue({ name: '', genres: [] });
-//     jest
-//       .spyOn(artistRepository, 'save')
-//       .mockResolvedValue({ name: '', genres: [], id: 'aa-xx-dd-ss-ww-sasdas' });
-//     expect(() => {
-//       controller.createArtist(artistDto);
-//     }).toThrow();
-//   });
-
-//   afterEach(() => {
-//     jest.restoreAllMocks();
-//   });
-// });

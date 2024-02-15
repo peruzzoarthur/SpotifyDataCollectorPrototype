@@ -16,7 +16,7 @@ import {
 } from '../../utils/mocks/artists.mock';
 import { BadRequestException } from '@nestjs/common';
 
-describe('setting up for testing artists service', () => {
+describe('ArtistsService', () => {
   let service: ArtistsService;
   let artistRepository: Repository<Artist>;
   let genreRepository: Repository<Genre>;
@@ -44,7 +44,7 @@ describe('setting up for testing artists service', () => {
   });
 
   describe('createArtistWithGenres', () => {
-    it('creates an artist with genres when all genres already exist in the database', async () => {
+    it('creates an artist when all genres already exist in the database', async () => {
       jest
         .spyOn(genreRepository, 'findOne')
         .mockResolvedValue(genreSavedEntityMock);
@@ -62,7 +62,7 @@ describe('setting up for testing artists service', () => {
       expect(result).toEqual(artistSavedEntityMock);
     });
 
-    it('creates an artist with genres when some genres already exist in the database and some do not', async () => {
+    it('creates an artist when some genres already exist in the database and some do not', async () => {
       jest
         .spyOn(genreRepository, 'findOne')
         .mockResolvedValueOnce(genreSavedEntityMock)
@@ -73,18 +73,55 @@ describe('setting up for testing artists service', () => {
       jest
         .spyOn(genreRepository, 'save')
         .mockResolvedValue(genreSavedEntityMock);
-      jest
-        .spyOn(artistRepository, 'create')
-        .mockReturnValue(artistCreatedEntityMock);
-      jest
-        .spyOn(artistRepository, 'save')
-        .mockResolvedValue(artistSavedEntityMock);
+      jest.spyOn(artistRepository, 'create').mockReturnValue({
+        name: 'The Ogre Magixx',
+        genres: [
+          {
+            id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
+            name: 'Ogre Music',
+          },
+          {
+            id: 'f0fafa21-82d9-4253-9621-cdcfb944484b',
+            name: 'Midas Multicast Techno',
+          },
+        ],
+      });
+      jest.spyOn(artistRepository, 'save').mockResolvedValue({
+        name: 'The Ogre Magixx',
+        id: '0e944457-8613-4737-b275-be11a0da6127',
+        genres: [
+          {
+            id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
+            name: 'Ogre Music',
+          },
+          {
+            id: 'f0fafa21-82d9-4253-9621-cdcfb944484b',
+            name: 'Midas Multicast Techno',
+          },
+        ],
+      });
 
-      const artistDto: CreateArtistDto = artistDtoMock;
+      const artistDto: CreateArtistDto = {
+        name: 'The Ogre Magixx',
+        genres: ['Ogre Music', 'Midas Multicast Techno'],
+      };
 
       const result = await service.createArtistWithGenres(artistDto);
 
-      expect(result).toEqual(artistSavedEntityMock);
+      expect(result).toEqual({
+        name: 'The Ogre Magixx',
+        id: '0e944457-8613-4737-b275-be11a0da6127',
+        genres: [
+          {
+            id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
+            name: 'Ogre Music',
+          },
+          {
+            id: 'f0fafa21-82d9-4253-9621-cdcfb944484b',
+            name: 'Midas Multicast Techno',
+          },
+        ],
+      });
     });
 
     it('creates an artist with genres when no genres exist in the database', async () => {
