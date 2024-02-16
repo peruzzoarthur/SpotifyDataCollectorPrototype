@@ -1,6 +1,9 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Artist } from '../entities/artist.entity';
-import { artistSavedEntityMock } from '../../utils/mocks/artists.mock';
+import {
+  arrayOfArtists,
+  artistSavedEntityMock,
+} from '../../utils/mocks/artists.mock';
 import { ArtistsController } from '../artists.controller';
 import { ArtistsService } from '../artists.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -106,6 +109,31 @@ describe('setting up config for testing artists controller', () => {
             expect(errorBody).toHaveProperty('statusCode', 400);
           });
       });
+    });
+  });
+
+  describe('when getting the artists', () => {
+    describe('and querying all artists', () => {
+      it('responds with an array with all the artists', () => {
+        const dbMock = arrayOfArtists;
+        return request(app.getHttpServer())
+          .get('/artists')
+          .expect(200)
+          .expect(dbMock);
+      });
+
+      // it.only('responds with an array with a limited number of artists when a limit is provided', () => {
+      //   const total = 1; // Set the total as needed
+      //   const dbMock = arrayOfArtists.slice(0, total);
+      //   jest.spyOn(artistRepositoryMock, 'find').mockResolvedValueOnce(dbMock);
+
+      //   return request(app.getHttpServer())
+      //     .get(`/artists?total=${total}`)
+      //     .expect(200)
+      //     .expect(dbMock)
+      //     .expect(artistRepositoryMock.find)
+      //     .toHaveBeenCalledWith({ take: total });
+      // });
     });
   });
 });

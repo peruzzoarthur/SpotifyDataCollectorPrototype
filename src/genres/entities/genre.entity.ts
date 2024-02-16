@@ -19,6 +19,12 @@ export class Genre {
   @IsString()
   name: string;
 
+  @Column()
+  timestamp?: string;
+
+  @Column()
+  createdAt?: string;
+
   @ManyToMany(() => Artist, (artist) => artist.genres)
   artists?: Artist[];
 }

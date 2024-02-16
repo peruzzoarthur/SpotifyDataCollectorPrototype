@@ -12,7 +12,7 @@ export const genreSavedEntityMock: Genre = {
 
 export const artistCreatedEntityMock: Artist = {
   name: 'The Ogre Magixx',
-  createdAt: '1708026472456',
+  timestamp: '1708026472456',
   genres: [
     {
       id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
@@ -23,7 +23,7 @@ export const artistCreatedEntityMock: Artist = {
 
 export const artistSavedEntityMock: Artist = {
   name: 'The Ogre Magixx',
-  createdAt: '1708026472456',
+  timestamp: '1708026472456',
   id: '0e944457-8613-4737-b275-be11a0da6127',
   genres: [
     {
@@ -40,13 +40,13 @@ export const artistDtoMock: CreateArtistDto = {
 
 export const artistSavedWithoutGenresMock: Artist = {
   name: 'The Sound of Nothing',
-  createdAt: '1708026472456',
+  timestamp: '1708026472456',
   genres: [],
 };
 
 export const artistCreatedWithoutGenresMock: Artist = {
   name: 'The Sound of Nothing',
-  createdAt: '1708026472456',
+  timestamp: '1708026472456',
   id: '0e944457-8613-4737-b275-be11a0da6667',
   genres: [],
 };
@@ -55,7 +55,7 @@ export const arrayOfArtists: Artist[] = [
   {
     id: '614b846e-e09c-4f07-95b0-28266e7a87df',
     name: 'Lithicus Ludicus',
-    createdAt: '1708026472456',
+    timestamp: '1708026472456',
     genres: [
       {
         id: 'ce9a79db-5fc5-422c-833f-d7f91efe5fb1',
@@ -66,7 +66,7 @@ export const arrayOfArtists: Artist[] = [
   {
     id: '032587ac-c470-421e-967e-3779970e406c',
     name: 'The Ogre Magixx',
-    createdAt: '1708026472456',
+    timestamp: '1708026472456',
     genres: [
       {
         id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
@@ -77,7 +77,7 @@ export const arrayOfArtists: Artist[] = [
   {
     id: '1796631a-5cbe-4e33-8b2e-e23987be1de7',
     name: 'Lizza Guizardooo',
-    createdAt: '1708026472456',
+    timestamp: '1708026472456',
     genres: [
       {
         id: '21697560-e991-4635-ab16-0b5572346bc6',
@@ -92,7 +92,7 @@ export const arrayOfArtists: Artist[] = [
   {
     id: '0e944457-8613-4737-b275-be11a0da6127',
     name: 'The Sound of Nothing',
-    createdAt: '1708026472456',
+    timestamp: '1708026472456',
     genres: [],
   },
 ];

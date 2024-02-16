@@ -23,4 +23,10 @@ export class Artist {
   })
   @JoinTable()
   public genres: Genre[];
+
+  @Column()
+  timestamp: string;
+
+  @Column()
+  createdAt?: string;
 }

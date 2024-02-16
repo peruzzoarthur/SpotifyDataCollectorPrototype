@@ -6,18 +6,20 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { ArtistsService } from './artists.service';
 import idIsUUID from '../utils/idIsUUID';
+import { cleanStringExtraSpaces } from '../utils/cleanStringExtraSpaces';
 
 @Controller('artists')
 export class ArtistsController {
   constructor(private readonly artistsService: ArtistsService) {}
   @Get()
-  getAllArtists() {
-    return this.artistsService.getAllArtists();
+  getAllArtists(@Query('total') total?: number) {
+    return this.artistsService.getAllArtists(total);
   }
 
   @Get(':id')
@@ -27,18 +29,13 @@ export class ArtistsController {
 
   @Post()
   async createArtist(@Body() artistDto: CreateArtistDto) {
-    const cleanedName: string = artistDto.name
-      .split(/\s+/)
-      .filter((string) => string !== '')
-      .join(' ');
+    const cleanedName: string = cleanStringExtraSpaces(artistDto.name);
     artistDto.name = cleanedName;
     const cleanedGenres: string[] = artistDto.genres.map((s) =>
-      s
-        .split(/\s+/)
-        .filter((string) => string !== '')
-        .join(' '),
+      cleanStringExtraSpaces(s),
     );
     artistDto.genres = cleanedGenres;
+
     return this.artistsService.createArtistWithGenres(artistDto);
   }
 

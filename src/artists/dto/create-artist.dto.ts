@@ -7,6 +7,5 @@ export class CreateArtistDto {
 
   @IsArray()
   @IsString({ each: true, message: 'Each element in genres must be a string' })
-  // @Transform(({ value }) => value.forEach((a) => a.trim()))
   genres: string[];
 }
