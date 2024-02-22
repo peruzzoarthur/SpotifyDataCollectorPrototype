@@ -17,6 +17,7 @@ import { cleanStringExtraSpaces } from '../utils/cleanStringExtraSpaces';
 @Controller('artists')
 export class ArtistsController {
   constructor(private readonly artistsService: ArtistsService) {}
+
   @Get()
   getAllArtists(@Query('total') total?: number) {
     return this.artistsService.getAllArtists(total);

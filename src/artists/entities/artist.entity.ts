@@ -17,10 +17,7 @@ export class Artist {
   @Column()
   public name: string;
 
-  @ManyToMany(() => Genre, {
-    // cascade: true,
-    eager: true,
-  })
+  @ManyToMany(() => Genre, (genre) => genre.artists)
   @JoinTable()
   public genres: Genre[];
 
@@ -28,5 +25,17 @@ export class Artist {
   timestamp: string;
 
   @Column()
-  createdAt?: string;
+  createdAt: string;
+
+  @Column()
+  discoveredBy?: string;
+
+  @Column()
+  spotifyId?: string;
+
+  @Column({ nullable: true })
+  imageUrl?: string;
+
+  @Column({ nullable: true })
+  spotifyUri?: string;
 }

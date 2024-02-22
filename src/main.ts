@@ -9,6 +9,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new ExcludeNullInterceptor());
   app.use(cookieParser());
+  app.enableCors();
   await app.listen(3000);
 }
 bootstrap();

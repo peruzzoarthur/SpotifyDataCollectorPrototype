@@ -122,18 +122,22 @@ describe('setting up config for testing artists controller', () => {
           .expect(dbMock);
       });
 
-      // it.only('responds with an array with a limited number of artists when a limit is provided', () => {
-      //   const total = 1; // Set the total as needed
-      //   const dbMock = arrayOfArtists.slice(0, total);
-      //   jest.spyOn(artistRepositoryMock, 'find').mockResolvedValueOnce(dbMock);
+      it('responds with an array with a limited number of artists when a limit is provided', () => {
+        let dbMock: Artist[] = arrayOfArtists;
+        const total = 1;
+        if (total) {
+          dbMock = arrayOfArtists.slice(0, total);
+          jest
+            .spyOn(artistRepositoryMock, 'find')
+            .mockResolvedValueOnce(dbMock);
+        }
 
-      //   return request(app.getHttpServer())
-      //     .get(`/artists?total=${total}`)
-      //     .expect(200)
-      //     .expect(dbMock)
-      //     .expect(artistRepositoryMock.find)
-      //     .toHaveBeenCalledWith({ take: total });
-      // });
+        return request(app.getHttpServer())
+          .get(`/artists?total=${total}`)
+          .expect(200)
+          .expect(dbMock)
+          .expect(artistRepositoryMock.find);
+      });
     });
   });
 });

@@ -92,30 +92,40 @@ describe('ArtistsService', () => {
         .mockResolvedValue(genreSavedEntityMock);
       jest.spyOn(artistRepository, 'create').mockReturnValue({
         name: 'The Ogre Magixx',
-        createdAt: '1708026472456',
+        timestamp: '1708026472456',
+        createdAt: '16-02-2024 16:20:00',
         genres: [
           {
             id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
             name: 'Ogre Music',
+            timestamp: '1708091423275',
+            createdAt: '16-02-2024 16:20:00',
           },
           {
             id: 'f0fafa21-82d9-4253-9621-cdcfb944484b',
             name: 'Midas Multicast Techno',
+            timestamp: '1708091423275',
+            createdAt: '16-02-2024 16:20:01',
           },
         ],
       });
       jest.spyOn(artistRepository, 'save').mockResolvedValue({
         name: 'The Ogre Magixx',
-        createdAt: '1708026472456',
+        timestamp: '1708026472456',
         id: '0e944457-8613-4737-b275-be11a0da6127',
+        createdAt: '16-02-2024 16:20:00',
         genres: [
           {
             id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
             name: 'Ogre Music',
+            timestamp: '1708091423275',
+            createdAt: '16-02-2024 16:20:00',
           },
           {
             id: 'f0fafa21-82d9-4253-9621-cdcfb944484b',
             name: 'Midas Multicast Techno',
+            timestamp: '1708091423275',
+            createdAt: '16-02-2024 16:20:01',
           },
         ],
       });
@@ -129,16 +139,21 @@ describe('ArtistsService', () => {
 
       expect(result).toEqual({
         name: 'The Ogre Magixx',
-        createdAt: '1708026472456',
+        timestamp: '1708026472456',
         id: '0e944457-8613-4737-b275-be11a0da6127',
+        createdAt: '16-02-2024 16:20:00',
         genres: [
           {
             id: 'f0fafa21-82d9-4153-9621-cdcfb944484b',
             name: 'Ogre Music',
+            timestamp: '1708091423275',
+            createdAt: '16-02-2024 16:20:00',
           },
           {
             id: 'f0fafa21-82d9-4253-9621-cdcfb944484b',
             name: 'Midas Multicast Techno',
+            timestamp: '1708091423275',
+            createdAt: '16-02-2024 16:20:01',
           },
         ],
       });

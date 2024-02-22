@@ -6,7 +6,7 @@ import { UpdateArtistDto } from './dto/update-artist.dto';
 import { ArtistNotFoundException } from './exceptions/artistNotFound.exception';
 import { Artist } from './entities/artist.entity';
 import { Genre } from '../genres/entities/genre.entity'; // Import Genre entity
-import { formatTimestampToDate } from 'src/utils/formatTimestampToDate';
+import { formatTimestampToDate } from '../utils/formatTimestampToDate';
 
 @Injectable()
 export class ArtistsService {
@@ -26,7 +26,6 @@ export class ArtistsService {
 
   async getArtistById(id: string) {
     const artist = await this.artistsRepository.findOne({ where: { id } });
-    console.log(artist);
     if (artist) {
       return artist;
     }
@@ -55,6 +54,7 @@ export class ArtistsService {
                 name: artistDto.genres[index],
                 timestamp: timestampNow,
                 createdAt: formatTimestampToDate(timestampNow),
+                discoveredBy: artistDto.user,
               });
               return await this.genresRepository.save(newGenre);
             }
@@ -69,6 +69,10 @@ export class ArtistsService {
         genres: genres,
         timestamp: timestampNow,
         createdAt: formatTimestampToDate(timestampNow),
+        discoveredBy: artistDto.user,
+        spotifyId: artistDto.spotifyId,
+        imageUrl: artistDto.imageUrl,
+        spotifyUri: artistDto.spotifyUri,
       });
 
       return await this.artistsRepository.save(artist);
@@ -80,6 +84,8 @@ export class ArtistsService {
       }
       throw error;
     }
+
+    // TODO  this is the proper action to take in my context??
   }
 
   async updateArtist(id: string, artistDto: UpdateArtistDto) {

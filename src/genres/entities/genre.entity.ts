@@ -20,11 +20,16 @@ export class Genre {
   name: string;
 
   @Column()
-  timestamp?: string;
+  timestamp: string;
 
   @Column()
-  createdAt?: string;
+  createdAt: string;
 
-  @ManyToMany(() => Artist, (artist) => artist.genres)
+  @ManyToMany(() => Artist, (artist) => artist.genres, {
+    eager: true,
+  })
   artists?: Artist[];
+
+  @Column()
+  discoveredBy?: string;
 }
