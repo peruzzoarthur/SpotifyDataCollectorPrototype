@@ -14,6 +14,7 @@ import { GenresModule } from './genres/genres.module';
         POSTGRES_USER: Joi.string().required(),
         POSTGRES_PASSWORD: Joi.string().required(),
         POSTGRES_DB: Joi.string().required(),
+        LASTFM_KEY: Joi.string().required(),
       }),
     }),
     DatabaseModule,

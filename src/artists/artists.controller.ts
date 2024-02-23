@@ -18,6 +18,12 @@ import { cleanStringExtraSpaces } from '../utils/cleanStringExtraSpaces';
 export class ArtistsController {
   constructor(private readonly artistsService: ArtistsService) {}
 
+  @Get('test')
+  getArtistExtraInfo() {
+    return this.artistsService.getArtistExtraInfo();
+    // searchArtistDto.name
+  }
+
   @Get()
   getAllArtists(@Query('total') total?: number) {
     return this.artistsService.getAllArtists(total);

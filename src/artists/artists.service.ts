@@ -7,6 +7,9 @@ import { ArtistNotFoundException } from './exceptions/artistNotFound.exception';
 import { Artist } from './entities/artist.entity';
 import { Genre } from '../genres/entities/genre.entity'; // Import Genre entity
 import { formatTimestampToDate } from '../utils/formatTimestampToDate';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import { ArtistInfoLastFmResponseType } from './types/ArtistInfoLastFmResponseType';
 
 @Injectable()
 export class ArtistsService {
@@ -15,6 +18,7 @@ export class ArtistsService {
     private artistsRepository: Repository<Artist>,
     @InjectRepository(Genre)
     private genresRepository: Repository<Genre>,
+    private readonly configService: ConfigService,
   ) {}
 
   async getAllArtists(total?: number) {
@@ -88,6 +92,48 @@ export class ArtistsService {
     // TODO  this is the proper action to take in my context??
   }
 
+  async getArtistExtraInfo() {
+    const allArtists = await this.artistsRepository.find();
+    const names = allArtists.map((a) => a.name);
+    console.log(names.length);
+    // const summariesArray: { name: string; summary: string }[] = [];
+
+    await Promise.all(
+      names.map(async (name, index) => {
+        try {
+          setTimeout(() => console.log(`${index}`), 5000);
+          // console.log(artist);
+          // console.log(index);
+          const artist = await this.artistsRepository.findOne({
+            where: { name },
+          });
+
+          if (artist.summary !== null) {
+            return;
+          }
+          const apiUrl = `http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${name}&api_key=${this.configService.get('LASTFM_KEY')}&format=json`;
+          // console.log(apiUrl);
+          const { data }: { data: ArtistInfoLastFmResponseType } =
+            await axios.get(apiUrl);
+
+          // if (
+          //   data.artist === undefined ||
+          //   data.artist.bio === undefined ||
+          //   data.artist.bio.summary === undefined
+          // ) {
+          //   return;
+          // }
+          artist.summary = data.artist.bio.summary;
+          const savedArtist = await this.artistsRepository.save(artist);
+          console.log(savedArtist);
+          return savedArtist;
+        } catch (error) {
+          throw new Error();
+        }
+      }),
+    );
+    return allArtists;
+  }
   async updateArtist(id: string, artistDto: UpdateArtistDto) {
     try {
       // get the artist that is being updated...

@@ -38,4 +38,7 @@ export class Artist {
 
   @Column({ nullable: true })
   spotifyUri?: string;
+
+  @Column({ nullable: true })
+  summary?: string;
 }
