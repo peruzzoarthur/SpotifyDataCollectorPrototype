@@ -24,6 +24,11 @@ export class ArtistsController {
     // searchArtistDto.name
   }
 
+  @Get('set-artist-country')
+  setArtistCountry() {
+    return this.artistsService.setArtistCountry();
+  }
+
   @Get()
   getAllArtists(@Query('total') total?: number) {
     return this.artistsService.getAllArtists(total);

@@ -41,4 +41,7 @@ export class Artist {
 
   @Column({ nullable: true })
   summary?: string;
+
+  @Column({ nullable: true })
+  country?: string;
 }

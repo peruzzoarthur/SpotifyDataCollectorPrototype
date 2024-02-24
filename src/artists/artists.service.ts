@@ -8,8 +8,9 @@ import { Artist } from './entities/artist.entity';
 import { Genre } from '../genres/entities/genre.entity'; // Import Genre entity
 import { formatTimestampToDate } from '../utils/formatTimestampToDate';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { ArtistInfoLastFmResponseType } from './types/ArtistInfoLastFmResponseType';
+import OpenAI from 'openai';
 
 @Injectable()
 export class ArtistsService {
@@ -190,4 +191,107 @@ export class ArtistsService {
     }
     return await this.artistsRepository.remove(artist);
   }
+
+  async wikiSearch() {
+    const languageCode: string = 'en';
+    const searchQuery: string = 'solar system';
+    const numberOfResults: number = 1;
+    const headers: Record<string, string> = {
+      // 'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+      'User-Agent': 'YOUR_APP_NAME (YOUR_EMAIL_OR_CONTACT_PAGE)',
+    };
+
+    const baseUrl: string = 'https://api.wikimedia.org/core/v1/wikipedia/';
+    const endpoint: string = '/search/page';
+    const url: string = `${baseUrl}${languageCode}${endpoint}`;
+    const parameters: Record<string, string | number> = {
+      q: searchQuery,
+      limit: numberOfResults,
+    };
+
+    const config: AxiosRequestConfig = {
+      headers,
+      params: parameters,
+    };
+
+    axios
+      .get(url, config)
+      .then((response) => {
+        // Handle the response data here
+        console.log(response.data);
+      })
+      .catch((error) => {
+        // Handle errors here
+        console.error('Error:', error);
+      });
+  }
+  // const spotifyGenres = this.genresRepository.find({ select: ['name'] });
+
+  async setArtistCountry() {
+    const artists = (await this.artistsRepository.find())
+      .filter((a) => a.country === null && a.summary !== null)
+      .slice(0, 10);
+    console.log(artists);
+
+    const openai = new OpenAI({
+      apiKey: this.configService.get('OA_KEY'),
+    });
+
+    const countries: { name: string; countryCode: string }[] =
+      await Promise.all(
+        artists.map(async (a, index) => {
+          // in the case the artist only has the <a> last.fm... <a/> in the summary
+
+          if (a.summary === null) {
+            return;
+          }
+          if (a.summary.length <= 300) {
+            a.country = undefined;
+            await this.artistsRepository.save(a);
+          }
+
+          // Introduce a delay between requests to avoid rate limiting
+          const delay = (ms) =>
+            new Promise((resolve) => setTimeout(resolve, ms));
+          const delayDuration = 10000; // Adjust this value based on your requirements
+          await delay(delayDuration);
+          console.log(`${index + 1}: ${a.name}`);
+
+          const response = await openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'user',
+                content: `Based on this text: ${a.summary}. Return ONLY the country code of the musician or band. The answer must be ONLY the country code, if not possible to identify just return undefined.`,
+              },
+            ],
+            temperature: 0.5,
+            max_tokens: 64,
+            top_p: 1,
+          });
+          a.country = response.choices[0].message.content;
+          await this.artistsRepository.save(a);
+          console.log(`called save on ${a.name}`);
+          return {
+            name: a.name,
+            countryCode: response.choices[0].message.content,
+          };
+        }),
+      );
+
+    return countries;
+  }
 }
+// const response = await openai.chat.completions.create({
+//   model: 'gpt-3.5-turbo',
+//   messages: [
+//     {
+//       role: 'user',
+//       content: `Based on this text: ${artistsSummaries[0]}. Can you tell me the country where this musician or band is from? The answer must be only the country code, if not possible to identify just return undefined.`,
+//     },
+//   ],
+//   temperature: 0.5,
+//   max_tokens: 64,
+//   top_p: 1,
+// });
+// return response.choices[0].message.content;
