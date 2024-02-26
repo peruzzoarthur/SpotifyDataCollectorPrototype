@@ -4,6 +4,7 @@ import * as Joi from '@hapi/joi';
 import { DatabaseModule } from './database/database.module';
 import { ArtistsModule } from './artists/artists.module';
 import { GenresModule } from './genres/genres.module';
+import { CountriesModule } from './countries/countries.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { GenresModule } from './genres/genres.module';
     // UsersModule,
     ArtistsModule,
     GenresModule,
+    CountriesModule,
   ],
   controllers: [],
   providers: [],

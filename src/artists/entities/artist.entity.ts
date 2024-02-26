@@ -1,9 +1,11 @@
+import { Country } from 'src/countries/entities/country.entity';
 import { Genre } from '../../genres/entities/genre.entity';
 import {
   Column,
   Entity,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
@@ -43,5 +45,8 @@ export class Artist {
   summary?: string;
 
   @Column({ nullable: true })
-  country?: string;
+  countryCode?: string;
+
+  @ManyToOne(() => Country, (country) => country.artists, { eager: true })
+  public country: Country;
 }

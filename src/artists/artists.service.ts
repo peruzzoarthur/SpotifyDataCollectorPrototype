@@ -230,8 +230,8 @@ export class ArtistsService {
   async setArtistCountry() {
     const artists = (await this.artistsRepository.find())
       .filter((a) => a.country === null && a.summary !== null)
-      .slice(0, 10);
-    console.log(artists);
+      .slice(0, 100);
+    // console.log(artists);
 
     const openai = new OpenAI({
       apiKey: this.configService.get('OA_KEY'),
@@ -251,11 +251,12 @@ export class ArtistsService {
           }
 
           // Introduce a delay between requests to avoid rate limiting
-          const delay = (ms) =>
+          const delay = (ms) => {
             new Promise((resolve) => setTimeout(resolve, ms));
+            console.log(`${index + 1}: ${a.name}`);
+          };
           const delayDuration = 10000; // Adjust this value based on your requirements
           await delay(delayDuration);
-          console.log(`${index + 1}: ${a.name}`);
 
           const response = await openai.chat.completions.create({
             model: 'gpt-3.5-turbo',
@@ -269,9 +270,9 @@ export class ArtistsService {
             max_tokens: 64,
             top_p: 1,
           });
-          a.country = response.choices[0].message.content;
+          a.countryCode = response.choices[0].message.content;
           await this.artistsRepository.save(a);
-          console.log(`called save on ${a.name}`);
+          console.log(`✅ called save on ${a.name}`);
           return {
             name: a.name,
             countryCode: response.choices[0].message.content,
