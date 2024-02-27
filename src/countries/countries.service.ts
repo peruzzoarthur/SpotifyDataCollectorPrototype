@@ -46,7 +46,7 @@ export class CountriesService {
   }
 
   async findAll() {
-    return await this.countriesRepository.find();
+    return await this.countriesRepository.find({ relations: ['artists'] });
   }
 
   // findOne(id: number) {

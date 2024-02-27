@@ -20,7 +20,7 @@ export class ArtistsController {
 
   @Get('test')
   getArtistExtraInfo() {
-    return this.artistsService.getArtistExtraInfo();
+    return this.artistsService.upCountry();
     // searchArtistDto.name
   }
 

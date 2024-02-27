@@ -25,6 +25,6 @@ export class Country {
   @Column()
   public countryCode: string;
 
-  @OneToMany(() => Artist, (artist) => artist.countryCode)
+  @OneToMany(() => Artist, (artist) => artist.country, { eager: true })
   public artists: Artist[];
 }

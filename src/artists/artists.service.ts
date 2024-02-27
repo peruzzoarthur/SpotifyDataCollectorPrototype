@@ -11,12 +11,15 @@ import { ConfigService } from '@nestjs/config';
 import axios, { AxiosRequestConfig } from 'axios';
 import { ArtistInfoLastFmResponseType } from './types/ArtistInfoLastFmResponseType';
 import OpenAI from 'openai';
+import { Country } from 'src/countries/entities/country.entity';
 
 @Injectable()
 export class ArtistsService {
   constructor(
     @InjectRepository(Artist)
     private artistsRepository: Repository<Artist>,
+    @InjectRepository(Country)
+    private countriesRepository: Repository<Country>,
     @InjectRepository(Genre)
     private genresRepository: Repository<Genre>,
     private readonly configService: ConfigService,
@@ -282,7 +285,37 @@ export class ArtistsService {
 
     return countries;
   }
+
+  public async upCountry(): Promise<void> {
+    // Get the repository for the Artist entity
+
+    // Fetch all artists with null countryId
+    const artistsWithNullCountryId = await this.artistsRepository.find({
+      where: {
+        countryId: null,
+      },
+    });
+
+    // Loop through each artist and update the countryId based on countryCode
+    for (const artist of artistsWithNullCountryId) {
+      const country = await this.countriesRepository.findOne({
+        where: {
+          countryCode: artist.countryCode,
+        },
+      });
+
+      if (country) {
+        artist.country = country;
+        await this.artistsRepository.save(artist);
+      }
+    }
+  }
+
+  // public async down(queryRunner: QueryRunner): Promise<void> {
+  //   // Reversal logic if needed
+  // }
 }
+
 // const response = await openai.chat.completions.create({
 //   model: 'gpt-3.5-turbo',
 //   messages: [

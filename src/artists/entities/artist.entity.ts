@@ -47,6 +47,9 @@ export class Artist {
   @Column({ nullable: true })
   countryCode?: string;
 
-  @ManyToOne(() => Country, (country) => country.artists, { eager: true })
-  public country: Country;
+  @ManyToOne(() => Country, (country) => country.artists)
+  country: Country;
+
+  @Column({ nullable: true })
+  countryId?: string;
 }
