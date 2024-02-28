@@ -8,10 +8,11 @@ import { Artist } from './entities/artist.entity';
 import { Genre } from '../genres/entities/genre.entity'; // Import Genre entity
 import { formatTimestampToDate } from '../utils/formatTimestampToDate';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { ArtistInfoLastFmResponseType } from './types/ArtistInfoLastFmResponseType';
 import OpenAI from 'openai';
 import { Country } from 'src/countries/entities/country.entity';
+import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 
 @Injectable()
 export class ArtistsService {
@@ -25,9 +26,13 @@ export class ArtistsService {
     private readonly configService: ConfigService,
   ) {}
 
+  // ##################### CRUD #############################
   async getAllArtists(total?: number) {
     if (total) {
-      return await this.artistsRepository.find({ take: total });
+      return await this.artistsRepository.find({
+        take: total,
+        relations: ['genres'],
+      });
     }
     return await this.artistsRepository.find();
   }
@@ -86,57 +91,16 @@ export class ArtistsService {
       return await this.artistsRepository.save(artist);
     } catch (error) {
       if (error.code === '23505') {
-        throw new BadRequestException(
-          'Artist with the same name already exists',
-        );
+        return null;
+        // throw new BadRequestException(
+        //   'Artist with the same name already exists',
+        // );
       }
-      throw error;
+      return null;
+      // throw error;
     }
 
     // TODO  this is the proper action to take in my context??
-  }
-
-  async getArtistExtraInfo() {
-    const allArtists = await this.artistsRepository.find();
-    const names = allArtists.map((a) => a.name);
-    console.log(names.length);
-    // const summariesArray: { name: string; summary: string }[] = [];
-
-    await Promise.all(
-      names.map(async (name, index) => {
-        try {
-          setTimeout(() => console.log(`${index}`), 5000);
-          // console.log(artist);
-          // console.log(index);
-          const artist = await this.artistsRepository.findOne({
-            where: { name },
-          });
-
-          if (artist.summary !== null) {
-            return;
-          }
-          const apiUrl = `http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${name}&api_key=${this.configService.get('LASTFM_KEY')}&format=json`;
-          // console.log(apiUrl);
-          const { data }: { data: ArtistInfoLastFmResponseType } =
-            await axios.get(apiUrl);
-
-          // if (
-          //   data.artist === undefined ||
-          //   data.artist.bio === undefined ||
-          //   data.artist.bio.summary === undefined
-          // ) {
-          //   return;
-          // }
-          artist.summary = data.artist.bio.summary;
-          const savedArtist = await this.artistsRepository.save(artist);
-          console.log(savedArtist);
-          return savedArtist;
-        } catch (error) {
-          throw new Error();
-        }
-      }),
-    );
-    return allArtists;
   }
   async updateArtist(id: string, artistDto: UpdateArtistDto) {
     try {
@@ -195,40 +159,52 @@ export class ArtistsService {
     return await this.artistsRepository.remove(artist);
   }
 
-  async wikiSearch() {
-    const languageCode: string = 'en';
-    const searchQuery: string = 'solar system';
-    const numberOfResults: number = 1;
-    const headers: Record<string, string> = {
-      // 'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
-      'User-Agent': 'YOUR_APP_NAME (YOUR_EMAIL_OR_CONTACT_PAGE)',
-    };
+  // ##################### CRUD END #############################
 
-    const baseUrl: string = 'https://api.wikimedia.org/core/v1/wikipedia/';
-    const endpoint: string = '/search/page';
-    const url: string = `${baseUrl}${languageCode}${endpoint}`;
-    const parameters: Record<string, string | number> = {
-      q: searchQuery,
-      limit: numberOfResults,
-    };
+  // ##################### ADD SUMMARY AND COUNTRIES #############################
 
-    const config: AxiosRequestConfig = {
-      headers,
-      params: parameters,
-    };
+  async getArtistExtraInfo() {
+    const allArtists = await this.artistsRepository.find();
+    const names = allArtists.map((a) => a.name);
+    console.log(names.length);
+    // const summariesArray: { name: string; summary: string }[] = [];
 
-    axios
-      .get(url, config)
-      .then((response) => {
-        // Handle the response data here
-        console.log(response.data);
-      })
-      .catch((error) => {
-        // Handle errors here
-        console.error('Error:', error);
-      });
+    await Promise.all(
+      names.map(async (name, index) => {
+        try {
+          setTimeout(() => console.log(`${index}`), 5000);
+          // console.log(artist);
+          // console.log(index);
+          const artist = await this.artistsRepository.findOne({
+            where: { name },
+          });
+
+          if (artist.summary !== null) {
+            return;
+          }
+          const apiUrl = `http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${name}&api_key=${this.configService.get('LASTFM_KEY')}&format=json`;
+          // console.log(apiUrl);
+          const { data }: { data: ArtistInfoLastFmResponseType } =
+            await axios.get(apiUrl);
+
+          // if (
+          //   data.artist === undefined ||
+          //   data.artist.bio === undefined ||
+          //   data.artist.bio.summary === undefined
+          // ) {
+          //   return;
+          // }
+          artist.summary = data.artist.bio.summary;
+          const savedArtist = await this.artistsRepository.save(artist);
+          console.log(savedArtist);
+          return savedArtist;
+        } catch (error) {
+          throw new Error();
+        }
+      }),
+    );
+    return allArtists;
   }
-  // const spotifyGenres = this.genresRepository.find({ select: ['name'] });
 
   async setArtistCountry() {
     const artists = (await this.artistsRepository.find())
@@ -286,17 +262,13 @@ export class ArtistsService {
     return countries;
   }
 
-  public async upCountry(): Promise<void> {
-    // Get the repository for the Artist entity
-
-    // Fetch all artists with null countryId
+  async upCountry(): Promise<void> {
     const artistsWithNullCountryId = await this.artistsRepository.find({
       where: {
         countryId: null,
       },
     });
 
-    // Loop through each artist and update the countryId based on countryCode
     for (const artist of artistsWithNullCountryId) {
       const country = await this.countriesRepository.findOne({
         where: {
@@ -311,21 +283,41 @@ export class ArtistsService {
     }
   }
 
-  // public async down(queryRunner: QueryRunner): Promise<void> {
-  //   // Reversal logic if needed
-  // }
-}
+  // ##################### COLLECT DATA FROM A SPOTIFY PLAYLIST #############################
 
-// const response = await openai.chat.completions.create({
-//   model: 'gpt-3.5-turbo',
-//   messages: [
-//     {
-//       role: 'user',
-//       content: `Based on this text: ${artistsSummaries[0]}. Can you tell me the country where this musician or band is from? The answer must be only the country code, if not possible to identify just return undefined.`,
-//     },
-//   ],
-//   temperature: 0.5,
-//   max_tokens: 64,
-//   top_p: 1,
-// });
-// return response.choices[0].message.content;
+  async getArtistsFromPlaylist() {
+    const sdk = SpotifyApi.withClientCredentials(
+      this.configService.get('SPOTIFY_CLIENT_ID'),
+      this.configService.get('SPOTIFY_SECRET'),
+      ['playlist-read-private', 'playlist-read-collaborative'],
+    );
+
+    const playlistId = '1inIN4sSDbqD6tMUjqykTT';
+    const getPlaylist = await sdk.playlists.getPlaylist(playlistId);
+
+    const createPromises = getPlaylist.tracks.items.map(async (item) => {
+      const track = item.track;
+      const isArtistInDb = await this.artistsRepository.findOne({
+        where: {
+          name: track.artists[0].name,
+        },
+      });
+
+      if (!isArtistInDb) {
+        const create = this.createArtistWithGenres({
+          name: track.artists[0].name,
+          genres: ['Music From the Past', 'Beforeman Music'],
+          imageUrl: track.album.images[0].url,
+          spotifyId: track.id,
+          spotifyUri: track.uri,
+          user: getPlaylist.owner.display_name,
+        });
+        return create;
+      }
+    });
+    console.log(createPromises);
+    const createResults = await Promise.all(createPromises);
+
+    return createResults.filter((result) => result !== undefined);
+  }
+}

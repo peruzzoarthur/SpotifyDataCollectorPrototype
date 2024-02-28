@@ -52,6 +52,7 @@
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.3.2",
+    "@spotify/web-api-ts-sdk": "^1.2.0",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",

@@ -24,6 +24,11 @@ export class ArtistsController {
     // searchArtistDto.name
   }
 
+  @Get('artists-from-playlist')
+  getArtistFromPlaylist() {
+    return this.artistsService.getArtistsFromPlaylist();
+  }
+
   @Get('set-artist-country')
   setArtistCountry() {
     return this.artistsService.setArtistCountry();

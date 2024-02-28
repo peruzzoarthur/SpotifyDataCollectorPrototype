@@ -19,9 +19,9 @@ export class Artist {
   @Column()
   public name: string;
 
-  @ManyToMany(() => Genre, (genre) => genre.artists)
+  @ManyToMany(() => Genre, (genre) => genre.artists, { eager: true })
   @JoinTable()
-  public genres: Genre[];
+  genres?: Genre[];
 
   @Column()
   timestamp: string;
