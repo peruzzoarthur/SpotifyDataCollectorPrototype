@@ -15,7 +15,12 @@ import axios from 'axios';
 import { ArtistInfoLastFmResponseType } from './types/ArtistInfoLastFmResponseType';
 import OpenAI from 'openai';
 import { Country } from 'src/countries/entities/country.entity';
-import { SpotifyApi } from '@spotify/web-api-ts-sdk';
+import {
+  Playlist,
+  SimplifiedArtist,
+  SpotifyApi,
+  TrackItem,
+} from '@spotify/web-api-ts-sdk';
 
 @Injectable()
 export class ArtistsService {
@@ -91,7 +96,9 @@ export class ArtistsService {
         spotifyUri: artistDto.spotifyUri,
       });
 
-      return await this.artistsRepository.save(artist);
+      const savedArtist = await this.artistsRepository.save(artist);
+
+      return savedArtist;
     } catch (error) {
       if (error.code === '23505') {
         return null;
@@ -299,31 +306,52 @@ export class ArtistsService {
       createArtistFromPlaylistDto.id,
     );
 
-    const createPromises = getPlaylist.tracks.items.map(async (item) => {
-      const track = item.track;
-      const isArtistInDb = await this.artistsRepository.findOne({
-        where: {
-          name: track.artists[0].name,
-        },
+    const createPromises = getPlaylist.tracks.items
+      .slice(0, 5)
+      .map(async (item) => {
+        const track = item.track;
+        const artists: SimplifiedArtist[] = [];
+
+        for (let index = 0; index < track.artists.length; index++) {
+          try {
+            const isArtistInDb = await this.artistsRepository.findOne({
+              where: {
+                name: track.artists[index].name,
+              },
+            });
+
+            if (!isArtistInDb) {
+              const genres = (await sdk.artists.get(track.artists[index].id))
+                .genres;
+              console.log(
+                `Calling create on artist: ${track.artists[index].name}`,
+              );
+              const create = this.createArtistWithGenres({
+                name: track.artists[index].name,
+                genres: genres,
+                imageUrl: track.album.images[0]?.url ?? 'undefined',
+                spotifyId: track.id,
+                spotifyUri: track.uri,
+                user: getPlaylist.owner.display_name,
+              });
+              await create;
+              artists.push(track.artists[index]);
+            }
+          } catch (error) {
+            console.error(`Error creating artist: ${error.message}`);
+          }
+        }
+        return artists;
       });
 
-      if (!isArtistInDb) {
-        const genres = (await sdk.artists.get(track.artists[0].id)).genres;
-        const create = this.createArtistWithGenres({
-          name: track.artists[0].name,
-          genres: genres,
-          imageUrl: track.album.images[0]?.url ?? 'undefined',
-          spotifyId: track.id,
-          spotifyUri: track.uri,
-          user: getPlaylist.owner.display_name,
-        });
-        return create;
-      }
-    });
-
-    const createResults = await Promise.all(createPromises);
-
-    return createResults.filter((result) => result !== undefined);
+    try {
+      const results = await Promise.all(createPromises);
+      return results;
+    } catch (error) {
+      console.error(`Error resolving artist promise: ${error.message}`);
+    } finally {
+      console.log('Success creating artists from playlist.');
+    }
   }
 
   async createArtistsFromUserPlaylists(
@@ -335,15 +363,27 @@ export class ArtistsService {
       ['playlist-read-private', 'playlist-read-collaborative'],
     );
 
-    const userPlaylists = await sdk.playlists.getUsersPlaylists(
-      createArtistsFromUsersPlaylistsDto.id,
-    );
+    let offset = 0;
+    const allUserPlaylists: Playlist<TrackItem>[] = [];
+    const limit = 1;
 
-    const createPromises = userPlaylists.items.map(async (playlist) => {
+    while (offset < 3) {
+      const userPlaylists = await sdk.playlists.getUsersPlaylists(
+        createArtistsFromUsersPlaylistsDto.id,
+        limit,
+        offset,
+      );
+      const items = userPlaylists.items;
+      items.map((i) => allUserPlaylists.push(i));
+      offset += limit;
+      console.log(userPlaylists);
+    }
+
+    const createPromises = allUserPlaylists.map(async (playlist) => {
       await this.createArtistsFromPlaylist({ id: playlist.id });
     });
 
-    const createResult = await Promise.all(createPromises);
-    return createResult.filter((result) => result !== undefined);
+    const result = await Promise.all(createPromises);
+    return result;
   }
 }

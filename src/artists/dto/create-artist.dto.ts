@@ -26,5 +26,5 @@ export class CreateArtistDto {
 export class CreateArtistsFromSpotify {
   @IsString()
   @IsNotEmpty()
-  id: string;
+  id?: string;
 }
