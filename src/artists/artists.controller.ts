@@ -8,7 +8,10 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { CreateArtistDto } from './dto/create-artist.dto';
+import {
+  CreateArtistDto,
+  CreateArtistsFromSpotify,
+} from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { ArtistsService } from './artists.service';
 import idIsUUID from '../utils/idIsUUID';
@@ -18,22 +21,7 @@ import { cleanStringExtraSpaces } from '../utils/cleanStringExtraSpaces';
 export class ArtistsController {
   constructor(private readonly artistsService: ArtistsService) {}
 
-  @Get('test')
-  getArtistExtraInfo() {
-    return this.artistsService.upCountry();
-    // searchArtistDto.name
-  }
-
-  @Get('artists-from-playlist')
-  getArtistFromPlaylist() {
-    return this.artistsService.getArtistsFromPlaylist();
-  }
-
-  @Get('set-artist-country')
-  setArtistCountry() {
-    return this.artistsService.setArtistCountry();
-  }
-
+  // ################ CRUD ########################
   @Get()
   getAllArtists(@Query('total') total?: number) {
     return this.artistsService.getAllArtists(total);
@@ -67,5 +55,34 @@ export class ArtistsController {
   @Delete(':id')
   async deleteArtist(@Param() { id }: idIsUUID) {
     return this.artistsService.deleteArtist(id);
+  }
+
+  // ################ OTHER ########################
+  @Get('test')
+  getArtistExtraInfo() {
+    return this.artistsService.upCountry();
+    // searchArtistDto.name
+  }
+  @Get('set-artist-country')
+  setArtistCountry() {
+    return this.artistsService.setArtistCountry();
+  }
+
+  @Post('artists-from-playlist')
+  async createArtistFromPlaylist(
+    @Body() createArtistFromPlaylistDto: CreateArtistsFromSpotify,
+  ) {
+    return this.artistsService.createArtistsFromPlaylist(
+      createArtistFromPlaylistDto,
+    );
+  }
+
+  @Post('artists-from-user-playlists')
+  async createArtistFromUserPlaylists(
+    @Body() createArtistFromUserPlaylists: CreateArtistsFromSpotify,
+  ) {
+    return this.artistsService.createArtistsFromUserPlaylists(
+      createArtistFromUserPlaylists,
+    );
   }
 }

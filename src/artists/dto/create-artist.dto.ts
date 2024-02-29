@@ -22,3 +22,9 @@ export class CreateArtistDto {
   @IsString()
   spotifyUri: string;
 }
+
+export class CreateArtistsFromSpotify {
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+}

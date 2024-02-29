@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateArtistDto } from './dto/create-artist.dto';
+import {
+  CreateArtistDto,
+  CreateArtistsFromSpotify,
+} from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { ArtistNotFoundException } from './exceptions/artistNotFound.exception';
 import { Artist } from './entities/artist.entity';
@@ -99,8 +102,6 @@ export class ArtistsService {
       return null;
       // throw error;
     }
-
-    // TODO  this is the proper action to take in my context??
   }
   async updateArtist(id: string, artistDto: UpdateArtistDto) {
     try {
@@ -285,15 +286,18 @@ export class ArtistsService {
 
   // ##################### COLLECT DATA FROM A SPOTIFY PLAYLIST #############################
 
-  async getArtistsFromPlaylist() {
+  async createArtistsFromPlaylist(
+    createArtistFromPlaylistDto: CreateArtistsFromSpotify,
+  ) {
     const sdk = SpotifyApi.withClientCredentials(
       this.configService.get('SPOTIFY_CLIENT_ID'),
       this.configService.get('SPOTIFY_SECRET'),
       ['playlist-read-private', 'playlist-read-collaborative'],
     );
 
-    const playlistId = '1inIN4sSDbqD6tMUjqykTT';
-    const getPlaylist = await sdk.playlists.getPlaylist(playlistId);
+    const getPlaylist = await sdk.playlists.getPlaylist(
+      createArtistFromPlaylistDto.id,
+    );
 
     const createPromises = getPlaylist.tracks.items.map(async (item) => {
       const track = item.track;
@@ -304,10 +308,11 @@ export class ArtistsService {
       });
 
       if (!isArtistInDb) {
+        const genres = (await sdk.artists.get(track.artists[0].id)).genres;
         const create = this.createArtistWithGenres({
           name: track.artists[0].name,
-          genres: ['Music From the Past', 'Beforeman Music'],
-          imageUrl: track.album.images[0].url,
+          genres: genres,
+          imageUrl: track.album.images[0]?.url ?? 'undefined',
           spotifyId: track.id,
           spotifyUri: track.uri,
           user: getPlaylist.owner.display_name,
@@ -315,9 +320,30 @@ export class ArtistsService {
         return create;
       }
     });
-    console.log(createPromises);
+
     const createResults = await Promise.all(createPromises);
 
     return createResults.filter((result) => result !== undefined);
+  }
+
+  async createArtistsFromUserPlaylists(
+    createArtistsFromUsersPlaylistsDto: CreateArtistsFromSpotify,
+  ) {
+    const sdk = SpotifyApi.withClientCredentials(
+      this.configService.get('SPOTIFY_CLIENT_ID'),
+      this.configService.get('SPOTIFY_SECRET'),
+      ['playlist-read-private', 'playlist-read-collaborative'],
+    );
+
+    const userPlaylists = await sdk.playlists.getUsersPlaylists(
+      createArtistsFromUsersPlaylistsDto.id,
+    );
+
+    const createPromises = userPlaylists.items.map(async (playlist) => {
+      await this.createArtistsFromPlaylist({ id: playlist.id });
+    });
+
+    const createResult = await Promise.all(createPromises);
+    return createResult.filter((result) => result !== undefined);
   }
 }
