@@ -16,6 +16,7 @@ import { ArtistInfoLastFmResponseType } from './types/ArtistInfoLastFmResponseTy
 import OpenAI from 'openai';
 import { Country } from 'src/countries/entities/country.entity';
 import {
+  MaxInt,
   Playlist,
   SimplifiedArtist,
   SpotifyApi,
@@ -296,30 +297,32 @@ export class ArtistsService {
   async createArtistsFromPlaylist(
     createArtistFromPlaylistDto: CreateArtistsFromSpotify,
   ) {
+    // Initialize spotify sdk
     const sdk = SpotifyApi.withClientCredentials(
       this.configService.get('SPOTIFY_CLIENT_ID'),
       this.configService.get('SPOTIFY_SECRET'),
       ['playlist-read-private', 'playlist-read-collaborative'],
     );
-
+    // Get the playlist based on its id
     const getPlaylist = await sdk.playlists.getPlaylist(
       createArtistFromPlaylistDto.id,
     );
-
+    // Create the promises based on the items from the playlist
     const createPromises = getPlaylist.tracks.items
-      .slice(0, 5)
+      // .slice(0, 1) // TODO slice for testing purposes
       .map(async (item) => {
         const track = item.track;
         const artists: SimplifiedArtist[] = [];
-
+        // Loop through all the artists of each track
         for (let index = 0; index < track.artists.length; index++) {
           try {
+            // Check if the artist is already saved on db...
             const isArtistInDb = await this.artistsRepository.findOne({
               where: {
                 name: track.artists[index].name,
               },
             });
-
+            // If not, call the create method on it and push it to an array that keeps track of the saved artists
             if (!isArtistInDb) {
               const genres = (await sdk.artists.get(track.artists[index].id))
                 .genres;
@@ -343,47 +346,81 @@ export class ArtistsService {
         }
         return artists;
       });
-
+    // Resolve the promises
     try {
       const results = await Promise.all(createPromises);
       return results;
     } catch (error) {
       console.error(`Error resolving artist promise: ${error.message}`);
-    } finally {
-      console.log('Success creating artists from playlist.');
     }
   }
 
   async createArtistsFromUserPlaylists(
     createArtistsFromUsersPlaylistsDto: CreateArtistsFromSpotify,
   ) {
+    // Initialize spotify sdk
     const sdk = SpotifyApi.withClientCredentials(
       this.configService.get('SPOTIFY_CLIENT_ID'),
       this.configService.get('SPOTIFY_SECRET'),
       ['playlist-read-private', 'playlist-read-collaborative'],
     );
 
-    let offset = 0;
-    const allUserPlaylists: Playlist<TrackItem>[] = [];
-    const limit = 1;
-
-    while (offset < 3) {
-      const userPlaylists = await sdk.playlists.getUsersPlaylists(
+    // Check the total number of playlists that the user has
+    const total: number = (
+      await sdk.playlists.getUsersPlaylists(
         createArtistsFromUsersPlaylistsDto.id,
-        limit,
-        offset,
-      );
-      const items = userPlaylists.items;
-      items.map((i) => allUserPlaylists.push(i));
-      offset += limit;
-      console.log(userPlaylists);
-    }
+      )
+    ).total;
 
-    const createPromises = allUserPlaylists.map(async (playlist) => {
-      await this.createArtistsFromPlaylist({ id: playlist.id });
+    // Do nothing if user has no playlists
+    if (total < 1) {
+      return null;
+    }
+    // Set variables in order to deal with pagination
+    let offset: number = 0;
+    const playlists: Playlist<TrackItem>[] = [];
+    const limit: MaxInt<50> = 25;
+    const savedPlaylists: string[] = [];
+    // Get page of the user's playlists
+
+    try {
+      while (offset <= total) {
+        const userPlaylists = await sdk.playlists.getUsersPlaylists(
+          createArtistsFromUsersPlaylistsDto.id,
+          limit,
+          offset,
+        );
+        const items = userPlaylists.items;
+        items.map((i) => playlists.push(i));
+        offset += limit;
+      }
+    } catch (error) {
+      console.error(`Error inside while loop: ${error.message}`);
+    }
+    // Create the promises based on the list extracted from the page
+    const createPromises = playlists.map(async (playlist, index) => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, index * 500));
+        console.log(
+          `👹 #${index + 1} Calling function on playlist ${playlist.name}`,
+        );
+        const create = this.createArtistsFromPlaylist({ id: playlist.id });
+        await create;
+        savedPlaylists.push(playlist.name);
+        return savedPlaylists;
+      } catch (error) {
+        console.error(
+          `Error creating promises at ${playlist.name} --- ${error}`,
+        );
+      }
     });
 
-    const result = await Promise.all(createPromises);
-    return result;
+    // Await promises to resolve
+    try {
+      const result = await Promise.all(createPromises);
+      return result;
+    } catch (error) {
+      console.error(`Error resolving promises: ${error.message}`);
+    }
   }
 }
