@@ -95,6 +95,7 @@ export class ArtistsService {
         spotifyId: artistDto.spotifyId,
         imageUrl: artistDto.imageUrl,
         spotifyUri: artistDto.spotifyUri,
+        countryCode: '?',
       });
 
       const savedArtist = await this.artistsRepository.save(artist);
@@ -172,18 +173,17 @@ export class ArtistsService {
 
   // ##################### ADD SUMMARY AND COUNTRIES #############################
 
-  async getArtistExtraInfo() {
+  async getArtistSummary() {
     const allArtists = await this.artistsRepository.find();
     const names = allArtists.map((a) => a.name);
     console.log(names.length);
-    // const summariesArray: { name: string; summary: string }[] = [];
 
     await Promise.all(
       names.map(async (name, index) => {
         try {
-          setTimeout(() => console.log(`${index}`), 5000);
-          // console.log(artist);
-          // console.log(index);
+          await new Promise((resolve) => setTimeout(resolve, index * 500));
+          console.log(`👺 ${index}: ${name}`);
+
           const artist = await this.artistsRepository.findOne({
             where: { name },
           });
@@ -192,23 +192,21 @@ export class ArtistsService {
             return;
           }
           const apiUrl = `http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${name}&api_key=${this.configService.get('LASTFM_KEY')}&format=json`;
-          // console.log(apiUrl);
           const { data }: { data: ArtistInfoLastFmResponseType } =
             await axios.get(apiUrl);
 
-          // if (
-          //   data.artist === undefined ||
-          //   data.artist.bio === undefined ||
-          //   data.artist.bio.summary === undefined
-          // ) {
-          //   return;
-          // }
+          if (
+            data.artist === undefined ||
+            data.artist.bio === undefined ||
+            data.artist.bio.summary === undefined
+          ) {
+            return;
+          }
           artist.summary = data.artist.bio.summary;
           const savedArtist = await this.artistsRepository.save(artist);
-          console.log(savedArtist);
           return savedArtist;
         } catch (error) {
-          throw new Error();
+          throw new Error(`${error.message}`);
         }
       }),
     );
@@ -217,9 +215,9 @@ export class ArtistsService {
 
   async setArtistCountry() {
     const artists = (await this.artistsRepository.find())
-      .filter((a) => a.country === null && a.summary !== null)
+      .filter((a) => a.countryCode === '?' && a.summary !== null)
       .slice(0, 100);
-    // console.log(artists);
+    console.log(artists);
 
     const openai = new OpenAI({
       apiKey: this.configService.get('OA_KEY'),
@@ -237,14 +235,15 @@ export class ArtistsService {
             a.country = undefined;
             await this.artistsRepository.save(a);
           }
-
           // Introduce a delay between requests to avoid rate limiting
-          const delay = (ms) => {
-            new Promise((resolve) => setTimeout(resolve, ms));
-            console.log(`${index + 1}: ${a.name}`);
-          };
-          const delayDuration = 10000; // Adjust this value based on your requirements
-          await delay(delayDuration);
+          // const delay = (ms) => {
+          //   new Promise((resolve) => setTimeout(resolve, ms));
+          //   console.log(`${index + 1}: ${a.name}`);
+          // };
+          // const delayDuration = 10000; // Adjust this value based on your requirements
+          // await delay(delayDuration);
+          await new Promise((resolve) => setTimeout(resolve, index * 500)); // Todo --- Test this delay here
+          console.log(`🤖 #${index + 1} Calling Ma'Bot on artist ${a.name}`);
 
           const response = await openai.chat.completions.create({
             model: 'gpt-3.5-turbo',
@@ -336,6 +335,7 @@ export class ArtistsService {
                 spotifyId: track.id,
                 spotifyUri: track.uri,
                 user: getPlaylist.owner.display_name,
+                // countryCode: undefined,
               });
               await create;
               artists.push(track.artists[index]);
@@ -418,7 +418,7 @@ export class ArtistsService {
     // Await promises to resolve
     try {
       const result = await Promise.all(createPromises);
-      return result;
+      return result[0];
     } catch (error) {
       console.error(`Error resolving promises: ${error.message}`);
     }

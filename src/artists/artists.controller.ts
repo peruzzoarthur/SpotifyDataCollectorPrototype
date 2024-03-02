@@ -21,6 +21,22 @@ import { cleanStringExtraSpaces } from '../utils/cleanStringExtraSpaces';
 export class ArtistsController {
   constructor(private readonly artistsService: ArtistsService) {}
 
+  // ################ DATA CREATION ########################
+
+  @Get('set-summary')
+  getArtistSummary() {
+    return this.artistsService.getArtistSummary();
+  }
+  @Get('set-artist-country')
+  setArtistCountry() {
+    return this.artistsService.setArtistCountry();
+  }
+
+  @Get('set-country-relation')
+  getArtistExtraInfo() {
+    return this.artistsService.upCountry();
+    // searchArtistDto.name
+  }
   // ################ CRUD ########################
   @Get()
   getAllArtists(@Query('total') total?: number) {
@@ -57,16 +73,7 @@ export class ArtistsController {
     return this.artistsService.deleteArtist(id);
   }
 
-  // ################ OTHER ########################
-  @Get('test')
-  getArtistExtraInfo() {
-    return this.artistsService.upCountry();
-    // searchArtistDto.name
-  }
-  @Get('set-artist-country')
-  setArtistCountry() {
-    return this.artistsService.setArtistCountry();
-  }
+  // ################ SPOTIFY ########################
 
   @Post('artists-from-playlist')
   async createArtistFromPlaylist(

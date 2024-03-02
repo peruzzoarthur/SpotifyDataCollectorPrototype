@@ -45,7 +45,7 @@ export class Artist {
   summary?: string;
 
   @Column({ nullable: true })
-  countryCode?: string;
+  countryCode: string;
 
   @ManyToOne(() => Country, (country) => country.artists)
   country: Country;
